@@ -1,4 +1,4 @@
 package br.com.judev.desafioju.dto;
 
-public record AuthResponse(String token, String tokenType, long expiresInMs) {
+public record AuthResponse(String token, String message, long expiresInMs) {
 }

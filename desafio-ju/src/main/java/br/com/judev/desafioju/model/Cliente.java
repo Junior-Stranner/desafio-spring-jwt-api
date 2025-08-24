@@ -24,11 +24,35 @@ public class Cliente {
     private String email;
 
     @NotBlank
-    private String senhaHash;
+    private String senha;
 
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Produto> produtos;
 
+    public Cliente() {
+    }
 
+    public Long getId() {
+        return id;
+    }
+    public String getNome() {
+        return nome;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setSenha(String senha) {
+        this.senha = senha;
+    }
 }
 
