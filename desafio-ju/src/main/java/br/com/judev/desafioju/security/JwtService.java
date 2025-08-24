@@ -26,7 +26,7 @@ public class JwtService {
             return JWT.create()
                     .withIssuer("auth-api")
                     .withSubject(userDetails.getUsername())
-                    .withExpiresAt()
+                    .withExpiresAt(generateExpirationDate())
                     .sign(algorithm);
         } catch (JWTCreationException exception) {
             throw new RuntimeException("Erro ao gerar o token", exception);
@@ -36,12 +36,16 @@ public class JwtService {
     public Instant generateExpirationDate() {
         return Instant.now().plusSeconds(expiration);
     }
-
     public String validateToken(String token) {
-        try{
-
-        }catch(JWTVerificationException exception){
-
+        try {
+            var algorithm = Algorithm.HMAC256(secretKey);
+            return JWT.require(algorithm)
+                    .withIssuer("login-auth-api")
+                    .build()
+                    .verify(token)
+                    .getSubject();
+        } catch (JWTVerificationException e) {
+            return null;
         }
     }
 }
