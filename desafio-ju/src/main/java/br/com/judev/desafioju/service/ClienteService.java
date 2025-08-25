@@ -1,9 +1,14 @@
 package br.com.judev.desafioju.service;
 
+import br.com.judev.desafioju.dto.AuthRequest;
+import br.com.judev.desafioju.dto.AuthResponse;
 import br.com.judev.desafioju.dto.ClienteRegisterRequest;
 import br.com.judev.desafioju.dto.ClienteRegisterResponse;
 import br.com.judev.desafioju.model.Cliente;
 import br.com.judev.desafioju.repository.ClienteRepository;
+import br.com.judev.desafioju.security.JwtService;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -12,10 +17,12 @@ public class ClienteService {
 
     private final ClienteRepository clienteRepository;
     private final PasswordEncoder encoder;
+    private final JwtService  jwtService;
 
-    public ClienteService(ClienteRepository clienteRepository, PasswordEncoder encoder) {
+    public ClienteService(ClienteRepository clienteRepository, PasswordEncoder encoder, JwtService jwtService) {
         this.clienteRepository = clienteRepository;
         this.encoder = encoder;
+        this.jwtService = jwtService;
     }
 
     public ClienteRegisterResponse registrar(ClienteRegisterRequest request){
@@ -26,13 +33,27 @@ public class ClienteService {
         c.setNome(request.nome());
         c.setEmail(request.email());
         c.setSenha(encoder.encode(request.senha()));
-        Cliente saved = clienteRepository.save(c);
+        Cliente salvo = clienteRepository.save(c);
 
-        return new ClienteRegisterResponse(saved.getId(), saved.getNome(), saved.getEmail(), "Cliente registrado om sucesso");
+        return new ClienteRegisterResponse(salvo.getId(), salvo.getNome(), salvo.getEmail(), "Cliente registrado om sucesso");
     }
+
+    public AuthResponse login(AuthRequest request) {
+        Cliente cliente = clienteRepository.findByEmail(request.email())
+                .orElseThrow(() -> new UsernameNotFoundException("Cliente não encontrado pelo email"));
+
+        if (!encoder.matches(request.password(), cliente.getPassword())) {
+            throw new BadCredentialsException("Senha Inválida");
+        }
+
+        String token = jwtService.generateToken(cliente);
+        return new AuthResponse(token, "Login realizado com sucesso!");
+    }
+
+
 
     public Cliente findClienteByEmail(String email) {
         return clienteRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Usuário inexistente"));
+                .orElseThrow(() -> new IllegalArgumentException("Cliente inexistente"));
     }
 }

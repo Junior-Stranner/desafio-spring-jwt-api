@@ -46,8 +46,9 @@ public class ProdutoService {
         p.setNome(request.nome());
         p.setDescricao(request.descricao());
         p.setValor(request.valor());
-        Produto produtoSalvo = produtoRepository.save(p);
-        return new ProdutoResponseDTO(produtoSalvo.getId(), p.getNome(), p.getDescricao(), p.getValor());
+        Produto produtoAtualizado = produtoRepository.save(p);
+
+        return new ProdutoResponseDTO(produtoAtualizado.getId(), p.getNome(), p.getDescricao(), p.getValor());
     }
 
     public void deletar(Cliente dono, Long id) {
