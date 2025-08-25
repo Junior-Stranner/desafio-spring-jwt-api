@@ -27,13 +27,12 @@ public class SecurityFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        // A partir daqui, o código de verificação do token
         var token = this.recoverToken(request);
         if (token != null) {
             String login = tokenService.validateToken(token);
             if (login != null) {
-                UserDetails user = userDetailsService.loadUserByUsername(login);
-                var authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                UserDetails client = userDetailsService.loadUserByUsername(login);
+                var authentication = new UsernamePasswordAuthenticationToken(client, null, client.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
