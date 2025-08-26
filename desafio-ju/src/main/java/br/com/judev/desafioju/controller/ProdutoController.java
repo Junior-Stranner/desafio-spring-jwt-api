@@ -7,6 +7,8 @@ import br.com.judev.desafioju.model.Produto;
 import br.com.judev.desafioju.service.ProdutoService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,10 +36,15 @@ public class ProdutoController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Produto>> listarProdutos(@AuthenticationPrincipal Cliente cliente) {
-        List<Produto> produtos = produtoService.listar(cliente);
+    public ResponseEntity<List<Produto>> listarProdutos() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        Cliente cliente = (Cliente) authentication.getPrincipal();
+
+        List<Produto> produtos = produtoService.listarProdutosDoCliente(cliente.getEmail());
         return ResponseEntity.ok(produtos);
     }
+
+
 
     @PutMapping("/{id}")
     public ResponseEntity<ProdutoResponseDTO> atualizarProduto(

@@ -1,11 +1,14 @@
 package br.com.judev.desafioju.service;
 
+import br.com.judev.desafioju.dto.AtualizandoProdutoDTO;
 import br.com.judev.desafioju.dto.ProdutoRequestDTO;
 import br.com.judev.desafioju.dto.ProdutoResponseDTO;
 import br.com.judev.desafioju.model.Cliente;
 import br.com.judev.desafioju.model.Produto;
 import br.com.judev.desafioju.repository.ClienteRepository;
 import br.com.judev.desafioju.repository.ProdutoRepository;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -39,25 +42,40 @@ public class ProdutoService {
         return new ProdutoResponseDTO(produtoSalvo.getId(), produtoSalvo.getNome(), produtoSalvo.getDescricao(), produtoSalvo.getValor());
     }
 
-    public List<Produto> listar(Cliente dono) {
-        return produtoRepository.findByClienteId(dono.getId());
+    public List<Produto> listarProdutosDoCliente(String email) {
+        Cliente cliente = clienteRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
+
+        return produtoRepository.findByClienteId(cliente.getId());
     }
 
-    public ProdutoResponseDTO atualizar(Cliente dono, Long id, ProdutoRequestDTO request) {
-        Produto p = produtoRepository.findByIdAndClienteId(id, dono.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado"));
-        p.setNome(request.nome());
-        p.setDescricao(request.descricao());
-        p.setValor(request.valor());
-        Produto produtoAtualizado = produtoRepository.save(p);
 
-        return new ProdutoResponseDTO(produtoAtualizado.getId(), p.getNome(), p.getDescricao(), p.getValor());
+    public AtualizandoProdutoDTO atualizar(Cliente cliente, Long produtoId, ProdutoRequestDTO request) {
+        Produto produto = produtoRepository.findById(produtoId)
+                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+
+        if (!produto.getCliente().getId().equals(cliente.getId())) {
+            throw new RuntimeException("Acesso negado: produto não pertence ao cliente logado");
+        }
+
+        produto.setNome(request.nome());
+        produto.setDescricao(request.descricao());
+        produto.setValor(request.valor());
+
+        Produto atualizado = produtoRepository.save(produto);
+        return new AtualizandoProdutoDTO(atualizado.getNome(), atualizado.getDescricao());
     }
 
-    public void deletar(Cliente dono, Long id) {
-        Produto p = produtoRepository.findByIdAndClienteId(id, dono.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado"));
-        produtoRepository.delete(p);
+    public void deletar(Cliente cliente, Long produtoId) {
+        Produto produto = produtoRepository.findById(produtoId)
+                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+
+        if (!produto.getCliente().getId().equals(cliente.getId())) {
+            throw new RuntimeException("Acesso negado: produto não pertence ao cliente logado");
+        }
+
+        produtoRepository.delete(produto);
     }
+
 
 }

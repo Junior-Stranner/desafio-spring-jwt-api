@@ -1,6 +1,5 @@
 package br.com.judev.desafioju.security;
 
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,12 +11,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+
 /**
  * Filtro de segurança responsável por validar tokens JWT em cada requisição.
- * <p>
- * Funciona interceptando todas as requisições (exceto login e registro) e
- * verificando se o header Authorization contém um token válido.
- * Se o token for válido, autentica o usuário no contexto de segurança do Spring.
  */
 public class SecurityFilter extends OncePerRequestFilter {
 
@@ -29,53 +25,73 @@ public class SecurityFilter extends OncePerRequestFilter {
         this.userDetailsService = userDetailsService;
     }
 
-    /**
-     * Filtro de segurança responsável por validar tokens JWT em cada requisição.
-     * <p>
-     * Funciona interceptando todas as requisições (exceto login e registro) e
-     * verificando se o header Authorization contém um token válido.
-     * Se o token for válido, autentica o usuário no contexto de segurança do Spring.
-     */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        if (request.getServletPath().equals("/api/v1/clientes/login") ||
-                request.getServletPath().equals("/api/v1/clientes/register")) {
+        String path = request.getServletPath();
+        String method = request.getMethod();
+
+        // Log para debug
+        System.out.println("=== SECURITY FILTER DEBUG ===");
+        System.out.println("Path: " + path);
+        System.out.println("Method: " + method);
+
+        if (path.equals("/api/v1/clientes/login") || path.equals("/api/v1/clientes/register")) {
+            System.out.println("Endpoint público - passando sem verificação");
             filterChain.doFilter(request, response);
             return;
         }
-        var token = this.recoverToken(request);
+
+        String token = this.recoverToken(request);
+        System.out.println("Token recuperado: " + (token != null ? "SIM" : "NÃO"));
 
         if (token == null) {
-            // Token ausente → retorna 401
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token ausente");
+            System.out.println("Token ausente - retornando 401");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"Token ausente\",\"status\":401}");
             return;
         }
 
-        String login = tokenService.validateToken(token);
-        if (login == null) {
-            // Token inválido → retorna 401
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inválido");
+        try {
+            String login = tokenService.validateToken(token);
+            System.out.println("Token validado - login: " + login);
+
+            if (login == null || login.isEmpty()) {
+                System.out.println("Token inválido - retornando 401");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\":\"Token inválido\",\"status\":401}");
+                return;
+            }
+
+            UserDetails client = userDetailsService.loadUserByUsername(login);
+            System.out.println("Usuário encontrado: " + client.getUsername());
+
+            var authentication = new UsernamePasswordAuthenticationToken(client, null, client.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            System.out.println("Autenticação configurada com sucesso");
+
+        } catch (Exception e) {
+            System.out.println("Erro na validação: " + e.getMessage());
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"Erro de autenticação: " + e.getMessage() + "\",\"status\":401}");
             return;
         }
-        UserDetails client = userDetailsService.loadUserByUsername(login);
-        var authentication = new UsernamePasswordAuthenticationToken(client, null, client.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        filterChain.doFilter(request, response);
 
+        System.out.println("Continuando para próximo filtro...");
         filterChain.doFilter(request, response);
     }
 
-    /**
-     * Recupera o token JWT do header Authorization.
-     * Espera o formato: "Bearer <token>"
-     *
-     * @param request Objeto HttpServletRequest da requisição.
-     * @return O token JWT sem o prefixo "Bearer ", ou null se não existir.
-     */
     private String recoverToken(HttpServletRequest request) {
         var authHeader = request.getHeader("Authorization");
-        if(authHeader == null || !authHeader.startsWith("Bearer ")) return null;
+        System.out.println("Authorization header: " + authHeader);
+
+        if(authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return null;
+        }
         return authHeader.substring(7);
     }
 }
