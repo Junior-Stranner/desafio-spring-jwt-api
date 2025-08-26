@@ -38,13 +38,10 @@ public class ClienteService {
         c.setEmail(request.email());
         c.setSenha(encoder.encode(request.senha()));
         Cliente salvo = clienteRepository.save(c);
-        logger.info("Salvo com sucesso: {}", c.getPassword());
         return new ClienteRegisterResponse(salvo.getId(), salvo.getNome(), salvo.getEmail(), "Cliente registrado om sucesso");
     }
 
     public AuthResponse login(AuthRequest request) {
-        System.out.println("Requisição recebida: " + request);
-
         Cliente cliente = clienteRepository.findByEmail(request.email())
                 .orElseThrow(() -> new UsernameNotFoundException("Cliente não encontrado pelo email"));
 
