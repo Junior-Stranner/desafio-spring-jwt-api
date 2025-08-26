@@ -40,7 +40,7 @@ public class JwtService {
         try {
             var algorithm = Algorithm.HMAC256(secretKey);
             return JWT.require(algorithm)
-                    .withIssuer("login-auth-api")
+                    .withIssuer("auth-api")
                     .build()
                     .verify(token)
                     .getSubject();

@@ -7,6 +7,8 @@ import br.com.judev.desafioju.dto.ClienteRegisterResponse;
 import br.com.judev.desafioju.model.Cliente;
 import br.com.judev.desafioju.repository.ClienteRepository;
 import br.com.judev.desafioju.security.JwtService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,6 +16,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ClienteService {
+
+    Logger logger = LoggerFactory.getLogger(ClienteService.class);
 
     private final ClienteRepository clienteRepository;
     private final PasswordEncoder encoder;
@@ -34,23 +38,26 @@ public class ClienteService {
         c.setEmail(request.email());
         c.setSenha(encoder.encode(request.senha()));
         Cliente salvo = clienteRepository.save(c);
-
+        logger.info("Salvo com sucesso: {}", c.getPassword());
         return new ClienteRegisterResponse(salvo.getId(), salvo.getNome(), salvo.getEmail(), "Cliente registrado om sucesso");
     }
 
     public AuthResponse login(AuthRequest request) {
+        System.out.println("Requisição recebida: " + request);
+
         Cliente cliente = clienteRepository.findByEmail(request.email())
                 .orElseThrow(() -> new UsernameNotFoundException("Cliente não encontrado pelo email"));
 
-        if (!encoder.matches(request.password(), cliente.getPassword())) {
+        if (cliente == null && request.senha().isBlank()) {
+            throw new UsernameNotFoundException("Cliente inexistente no Banco de Dados");
+        }
+        if (!encoder.matches(request.senha(), cliente.getSenha())) {
             throw new BadCredentialsException("Senha Inválida");
         }
 
         String token = jwtService.generateToken(cliente);
         return new AuthResponse(token, "Login realizado com sucesso!");
     }
-
-
 
     public Cliente findClienteByEmail(String email) {
         return clienteRepository.findByEmail(email)

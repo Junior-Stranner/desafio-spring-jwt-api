@@ -58,6 +58,10 @@ public class Cliente implements UserDetails {
         this.senha = senha;
     }
 
+    public String getSenha() {
+        return senha;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
