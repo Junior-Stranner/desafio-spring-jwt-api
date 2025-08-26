@@ -9,7 +9,10 @@ import br.com.judev.desafioju.repository.ProdutoRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+/**
+ * Serviço que encapsula a lógica de negócio dos produtos.
+ * Cuida de persistência, validações e regras específicas de cliente/produto.
+ */
 @Service
 public class ProdutoService {
 

@@ -9,7 +9,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
+/**
+ * Configurações de segurança da aplicação:
+ * - Endpoints de login/register liberados
+ * - Endpoints de produtos protegidos com JWT
+ * - PasswordEncoder BCrypt para hash seguro das senhas
+ */
 @Configuration
 public class SecurityConfig {
 

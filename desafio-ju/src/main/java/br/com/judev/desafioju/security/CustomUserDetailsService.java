@@ -6,7 +6,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
+/**
+ * Serviço personalizado para carregar detalhes de autenticação do usuário.
+ * <p>
+ * Implementa a interface UserDetailsService do Spring Security para que
+ * o framework possa buscar um usuário pelo email e verificar credenciais.
+ */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
@@ -16,6 +21,13 @@ public class CustomUserDetailsService implements UserDetailsService {
         this.clienteRepository = clienteRepository;
     }
 
+    /**
+     * Carrega um usuário pelo seu email.
+     *
+     * @param email Email do cliente a ser autenticado
+     * @return UserDetails do cliente, usado pelo Spring Security
+     * @throws UsernameNotFoundException Se o cliente não for encontrado no banco
+     */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         return clienteRepository.findByEmail(email)

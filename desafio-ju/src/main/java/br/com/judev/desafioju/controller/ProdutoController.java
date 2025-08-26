@@ -10,7 +10,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
+/**
+ * Controlador responsável por gerenciar endpoints de produtos.
+ * Permite criar, listar, atualizar e deletar produtos de um cliente autenticado.
+ */
 @RestController
 @RequestMapping("/api/v1/produtos")
 public class ProdutoController {
